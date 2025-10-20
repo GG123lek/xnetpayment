@@ -14,17 +14,16 @@ export default function PaymentSelection() {
   const [success, setSuccess] = useState(false);
   const [transactionData, setTransactionData] = useState(null);
 
-  // ✅ CORRECT API URL WITH HYPHEN: pg-payment (not pgpayment)
+  // API URL
   const API_BASE_URL = 'https://pg-payment.xnettpay.com/api/v1';
 
   // Extract transaction data from URL
   useEffect(() => {
     const testData = {
-      transactionId: 'TEST123', // Any ID works for testing
+      transactionId: 'TEST123',
       transactionAmount: 1500.00
     };
     setTransactionData(testData);
-    console.log('✅ Transaction data loaded:', testData);
   }, []);
 
   const formatCardNumber = (value) => {
@@ -82,15 +81,14 @@ export default function PaymentSelection() {
   };
 
   const validateCardDetails = () => {
-    // ✅ FOR TESTING: You can type anything, just basic format checks
-    if (!cardNumber || cardNumber.replace(/\s/g, '').length === 0) {
-      return 'Please enter a card number (any 16 digits for testing)';
+    if (!cardNumber || cardNumber.replace(/\s/g, '').length !== 16) {
+      return 'Please enter a valid 16-digit card number';
     }
-    if (!expiryDate || expiryDate.length === 0) {
-      return 'Please enter an expiry date (any date for testing)';
+    if (!expiryDate || expiryDate.length !== 7) {
+      return 'Please enter a valid expiry date (MM / YY)';
     }
-    if (!cvv || cvv.length === 0) {
-      return 'Please enter a CVV (any 3 digits for testing)';
+    if (!cvv || cvv.length !== 3) {
+      return 'Please enter a valid 3-digit CVV';
     }
     return null;
   };
@@ -102,8 +100,6 @@ export default function PaymentSelection() {
       setError('');
       
       const apiUrl = `${API_BASE_URL}/confirm/test/transaction/${transactionId}`;
-      console.log('🔄 Making API call to:', apiUrl);
-      console.log('📦 Request payload:', cardData);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -113,27 +109,13 @@ export default function PaymentSelection() {
         body: JSON.stringify(cardData),
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
-
-      // ✅ For test endpoint, we only care about HTTP status 200
       if (response.ok) {
         setSuccess(true);
-        console.log('🎉 Payment successful! Got 200 response');
-        
-        // Try to parse response if available
-        try {
-          const result = await response.json();
-          console.log('✅ API response data:', result);
-        } catch (e) {
-          console.log('✅ API returned 200 (success)');
-        }
       } else {
         throw new Error(`Payment failed with status: ${response.status}`);
       }
       
     } catch (err) {
-      console.error('❌ API Error:', err);
       setError(err.message || 'Failed to process payment. Please try again.');
       throw err;
     } finally {
@@ -143,53 +125,29 @@ export default function PaymentSelection() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🎯 Submit button clicked');
     
     if (!transactionData) {
       setError('Transaction data not available');
       return;
     }
 
-    // Validate card details (basic format only for testing)
     const validationError = validateCardDetails();
     if (validationError) {
       setError(validationError);
       return;
     }
 
-    // Prepare card data for API
     const cardData = {
       cardNumber: cardNumber.replace(/\s/g, ''),
       expiryDate: formatExpiryForAPI(expiryDate),
       cvv: cvv
     };
 
-    console.log('🚀 Sending to API:', cardData);
-
     try {
       await confirmTransaction(transactionData.transactionId, cardData);
     } catch (err) {
       console.error('Submission error:', err);
     }
-  };
-
-  // Test function - auto-fills with sample data
-  const testAPICall = () => {
-    console.log('🧪 Testing API call with sample data');
-    
-    // Set sample card data (you can change these to anything)
-    setCardNumber('4111 1111 1111 1111');
-    setExpiryDate('12 / 25');
-    setCvv('123');
-    
-    // Clear any previous errors
-    setError('');
-    
-    // Trigger submit
-    setTimeout(() => {
-      const testEvent = { preventDefault: () => {} };
-      handleSubmit(testEvent);
-    }, 100);
   };
 
   const formatAmount = (amount) => {
@@ -214,15 +172,6 @@ export default function PaymentSelection() {
             <p className="text-sm text-gray-500">
               Transaction ID: {transactionData?.transactionId}
             </p>
-            <p className="text-sm text-green-600 mt-2">
-              ✅ Received 200 OK response from payment gateway
-            </p>
-            <button
-              onClick={() => setSuccess(false)}
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Make Another Payment
-            </button>
           </div>
         </div>
       </div>
@@ -248,30 +197,6 @@ export default function PaymentSelection() {
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
-
-            {/* Testing Instructions */}
-            <div className="bg-green-50 border border-green-200 rounded-md p-4">
-              <h3 className="font-semibold text-green-800 mb-2">Testing Instructions</h3>
-              <ul className="text-sm text-green-700 list-disc list-inside space-y-1">
-                <li>✅ Type <strong>any card number</strong> (16 digits)</li>
-                <li>✅ Type <strong>any expiry date</strong> (MM/YY format)</li>
-                <li>✅ Type <strong>any CVV</strong> (3 digits)</li>
-                <li>✅ Click SUBMIT to trigger API call</li>
-                <li>✅ Check Network tab for POST request to payment gateway</li>
-              </ul>
-              <div className="mt-3 p-3 bg-blue-50 rounded">
-                <p className="text-sm text-blue-700">
-                  <strong>API Endpoint:</strong><br />
-                  <code className="text-xs">{API_BASE_URL}/confirm/test/transaction/{transactionData?.transactionId}</code>
-                </p>
-              </div>
-              <button
-                onClick={testAPICall}
-                className="mt-3 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
-              >
-                🧪 Auto-fill Sample Data & Test
-              </button>
-            </div>
 
             {/* XNET PAY Title */}
             <div className="text-center">
@@ -349,13 +274,12 @@ export default function PaymentSelection() {
                               type="text"
                               value={cardNumber}
                               onChange={handleCardNumberChange}
-                              placeholder="Type any 16 digits (e.g., 4111 1111 1111 1111)"
+                              placeholder="0000 0000 0000 0000"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={isLoading}
                             />
                             <CreditCard className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">For testing: Any 16-digit number works</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -367,11 +291,10 @@ export default function PaymentSelection() {
                               type="text"
                               value={expiryDate}
                               onChange={handleExpiryChange}
-                              placeholder="MM / YY (e.g., 12 / 25)"
+                              placeholder="MM / YY"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={isLoading}
                             />
-                            <p className="text-xs text-gray-500 mt-1">Any future date works</p>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,11 +304,10 @@ export default function PaymentSelection() {
                               type="text"
                               value={cvv}
                               onChange={handleCvvChange}
-                              placeholder="Any 3 digits (e.g., 123)"
+                              placeholder="CVV (3 Digits)"
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={isLoading}
                             />
-                            <p className="text-xs text-gray-500 mt-1">Any 3-digit number works</p>
                           </div>
                         </div>
                       </div>
@@ -417,7 +339,7 @@ export default function PaymentSelection() {
                     Processing...
                   </>
                 ) : (
-                  'SUBMIT PAYMENT'
+                  'SUBMIT'
                 )}
               </button>
             </div>
