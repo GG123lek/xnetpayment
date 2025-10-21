@@ -123,6 +123,9 @@ export default function PaymentSelection() {
       
       const apiUrl = `${API_BASE_URL}/confirm/test/transaction/${transactionId}`;
       
+      console.log('Sending request to:', apiUrl);
+      console.log('Card data:', { ...cardData, cvv: '***' }); // Hide CVV in logs
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -131,14 +134,28 @@ export default function PaymentSelection() {
         body: JSON.stringify(cardData),
       });
 
-      if (response.ok) {
-        // Backend will handle the redirect, so we don't show success page
-        console.log('Payment processed successfully, backend will redirect');
-      } else {
-        throw new Error(`Payment failed with status: ${response.status}`);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = `Payment failed with status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
+
+      // If we get here, payment was successful
+      // Backend will handle the redirect, so we don't need to do anything
+      console.log('Payment processed successfully - backend will redirect');
       
     } catch (err) {
+      console.error('API Error:', err);
       setError(err.message || 'Failed to process payment. Please try again.');
       throw err;
     } finally {
@@ -167,9 +184,12 @@ export default function PaymentSelection() {
     };
 
     try {
+      console.log('Submitting payment...');
       await confirmTransaction(transactionData.transactionId, cardData);
+      // If successful, the backend will redirect automatically
     } catch (err) {
       console.error('Submission error:', err);
+      // Error is already set in confirmTransaction
     }
   };
 
