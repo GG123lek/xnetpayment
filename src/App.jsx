@@ -2,7 +2,7 @@ import React from 'react'
 import PaymentSelection from './Component/Pages/PaymentSelection'
 
 
-// test push
+// test pushes
 function App() {
   return (
     <div>
