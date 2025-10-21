@@ -41,7 +41,6 @@ export default function PaymentSelection() {
   // API states
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   
   // Get transaction data from URL
   const transactionData = useTransactionFromURL();
@@ -133,7 +132,8 @@ export default function PaymentSelection() {
       });
 
       if (response.ok) {
-        setSuccess(true);
+        // Backend will handle the redirect, so we don't show success page
+        console.log('Payment processed successfully, backend will redirect');
       } else {
         throw new Error(`Payment failed with status: ${response.status}`);
       }
@@ -179,27 +179,6 @@ export default function PaymentSelection() {
       currency: 'NGN'
     }).format(amount);
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <div className="text-green-500 text-6xl mb-4">✓</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Payment Successful!
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Your payment of {formatAmount(transactionData?.transactionAmount || 0)} has been processed successfully.
-            </p>
-            <p className="text-sm text-gray-500">
-              Transaction ID: {transactionData?.transactionId}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
