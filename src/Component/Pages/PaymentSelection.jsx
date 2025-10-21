@@ -2,6 +2,36 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { CreditCard, ChevronLeft, Loader2 } from 'lucide-react';
 
+// Custom hook to extract transaction data from URL
+function useTransactionFromURL() {
+  const [transactionData, setTransactionData] = useState(null);
+
+  useEffect(() => {
+    const pathSegments = window.location.pathname.split('/').filter(segment => segment);
+    
+    if (pathSegments.length >= 2) {
+      const transactionId = pathSegments[0];
+      const amount = parseFloat(pathSegments[1]);
+      
+      if (transactionId && !isNaN(amount)) {
+        setTransactionData({
+          transactionId,
+          transactionAmount: amount
+        });
+        return;
+      }
+    }
+    
+    // Fallback to test data if no URL params or invalid format
+    setTransactionData({
+      transactionId: 'TEST123',
+      transactionAmount: 1500.00
+    });
+  }, []);
+
+  return transactionData;
+}
+
 export default function PaymentSelection() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [cardNumber, setCardNumber] = useState('');
@@ -12,19 +42,12 @@ export default function PaymentSelection() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [transactionData, setTransactionData] = useState(null);
+  
+  // Get transaction data from URL
+  const transactionData = useTransactionFromURL();
 
   // API URL
   const API_BASE_URL = 'https://pg-payment.xnettpay.com/api/v1';
-
-  // Extract transaction data from URL
-  useEffect(() => {
-    const testData = {
-      transactionId: 'TEST123',
-      transactionAmount: 1500.00
-    };
-    setTransactionData(testData);
-  }, []);
 
   const formatCardNumber = (value) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
@@ -238,6 +261,9 @@ export default function PaymentSelection() {
                 </p>
                 <p className="text-sm text-blue-700 mt-1">
                   Amount: <span className="font-mono">{formatAmount(transactionData.transactionAmount)}</span>
+                </p>
+                <p className="text-xs text-blue-600 mt-2">
+                  URL Parameters Detected: {window.location.pathname}
                 </p>
               </div>
             )}
